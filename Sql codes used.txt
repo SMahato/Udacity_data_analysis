@@ -1,0 +1,13 @@
+To extract data on a specific city
+
+SELECT *
+FROM city_data
+WHERE city = 'Sacramento';
+
+OR
+
+SELECT *
+FROM city_data
+WHERE city IN ('Sacramento');
+
+Delhi, China, Warsaw, Fresno, Riyadh, Accra
