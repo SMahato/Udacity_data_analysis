@@ -1,0 +1,383 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+White wine quality by Sumit Kumar Mahato
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+#install.packages("ggplot2")
+#install.packages("knitr")
+#install.packages("dplyr")
+#install.packages("BBmisc")
+#install.packages("GGally")
+
+
+#library(ggplot2)
+#library(knitr)
+#library(dplyr)
+#library(BBmisc)
+#library(GGally)
+
+```
+
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+setwd("C:/Users/sumit/Desktop/Courses/Data_analyst_nanodegree_Udacity/DAND-2/Part-2/Project")
+
+```
+
+# Univariate Plots Section
+```{r echo=FALSE, Univariate_Plots}
+#wine data
+wd<-read.csv("wineQualityWhites.csv")
+
+#structure of dataset
+str(wd)
+
+#summary of the dataset
+summary(wd)
+
+
+#normalizing the wine dataframe
+
+n_wd<- normalize(wd[,c(2:12)], method = "standardize", range = c(0, 5), margin = 1L, on.constant = "quiet")
+
+#boxplots of the physicochemical features
+ggplot(stack(n_wd), aes(x = ind, y = values)) +
+  geom_boxplot()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#boxplots of the physicochemical features with ylim = -5 to 5
+
+ggplot(stack(n_wd), aes(x = ind, y = values)) +
+  geom_boxplot()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+      scale_y_continuous(breaks = seq(-2,5,0.5), limits = c(-2,5))
+
+
+```
+
+# Univariate Analysis
+The guiding question of the analysis is which physicochemicals have significant impact on the quality of the wines.
+
+### What is the structure of your dataset?
+
+The dataset consists of 13 variables and approximately 5000 observations.All the variables are either int or num datatype. 
+
+### What is/are the main feature(s) of interest in your dataset?
+The main feature of interest in the dataset is the quality of wines.
+
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+11 physicochemical features are responsible for the quality of the wine. I am guessing that the features which are responsible for the taste, smell or after-effect of a wine could impact the quality score of the wine. Volatile acidity, citric acid, residual sugar, free sulfur dioxide, and alcohol are the features in the textfile on the dataset. In
+the next section the correlation of every feature against quality is
+estimated.
+
+### Did you create any new variables from existing variables in the dataset?
+No.
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+I started the univariate analysis by plotting histograms of every
+feature (can be found in the appendix section). For most of the features
+the distribution looked approximately normal with some outliers. It was
+found that boxplots could be better to compare the features with each
+other. However, the scales of the features were different, therefore, the dataset was first normalized within the range of 0-1 then boxplots were created.
+It can be noted that the chlorides had the lowest spread of data and 
+alcohol has no outliers (is it regulated?)
+
+
+
+# Bivariate Plots Section
+```{r echo=FALSE, message=FALSE}
+#the relationship between the variables are plotted against each other
+#using the GGally package. The inferences from the charts are discussed
+#in the following questions.
+
+
+#correlation grid
+theme_set(theme_minimal(20))
+
+#set seed for reproducible results
+set.seed(1610)
+wd_subset<- wd[,c(2:13)]
+names(wd_subset)
+ggpairs(wd_subset[sample.int(nrow(wd_subset),1000),])
+
+
+
+```
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+ggpairs function was used to plot the relationship among the different
+features.
+
+Following observations were made from the above plot:
+
+i. We could see that there is a strong positive relationship (0.842) b/w density and residual sugar which is natural as the higher the amount of residual sugar higher would be the density of the wine.
+
+ii. Another strong relationship noted between the alcohol and
+density is a negative one (-0.792). The reason could be the lower 
+density of alcohol as compared to water so higher the alcohol content
+in a wine lower would be the density of the wine.
+
+iii. The total sulphur dioxide and the free sulphur dioxide has a moderate corelation of 0.6 which is justified as the latter is a constituent of the former.
+
+iv.Apart from the above strong relationships there are couple of moderate correlation between pH and fixed acidity(-0.401) and alcohol and residual sugar(-0.456). We could assert the obvious fact that higher the acidity, lower is the pH value however, for the correlation between
+alcohol and residual sugar it could be said that both are consituents
+of wine and increase in one would lead to decrease in another and
+vice-versa.
+
+V. Most of the features are negatively correlated to the feature of 
+interest i.e., quality with only exception of pH, sulphate, and alcohol.
+
+vi. Alcohol content had a positive effect on the quality of wine(0.467) which was expected however, the negative correlation of density and quality was interesting which implied dense wines are less preferred.
+It would be interesting to note the impact of the interacting features on quality which would be carried out in the next section.
+
+### What was the strongest relationship you found?
+
+The strongest relationship is found between density and residual sugar (0.842).
+
+
+
+# Multivariate Plots Section
+
+```{r echo=FALSE, Multivariate_Plots}
+
+#relationship of 2 features, 1 postiive feature with 1 negative, with
+#quality of wine. Also a linear model was fit to the scatterplots
+
+
+ggplot(aes(x=volatile.acidity, y= alcohol), data=wd)+
+      geom_point()+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of volatile acidity and alcohol \n on quality")
+
+ggplot(aes(x=residual.sugar, y= alcohol), data=wd)+
+      geom_point()+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of residual sugar and alcohol \n on quality")
+
+
+ggplot(aes(x=chlorides, y= alcohol), data=wd)+
+      geom_point()+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of chlorides and alcohol \n on quality")
+
+
+ggplot(aes(x=total.sulfur.dioxide, y= alcohol), data=wd)+
+      geom_point()+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of total sulfur dioxide and alcohol \n 
+              on quality")
+ggplot(aes(x=density, y= alcohol), data=wd)+
+      geom_point()+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of density and alcohol \n on quality")
+
+
+# 2 positive features affecting quality of wine
+ggplot(aes(x=pH, y= alcohol), data=wd)+
+      geom_point()+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of pH and alcohol \n on quality")
+
+ggplot(aes(x=sulphates, y= alcohol), data=wd)+
+      geom_point()+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of sulphates and alcohol \n on quality")
+
+#3 positive features affecting quality of wine
+ggplot(aes(x=sulphates, y= alcohol), data=wd)+
+      geom_point(aes(color=pH))+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of sulphates, pH and alcohol \n on quality")
+      
+
+```
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+Almost all the high quality wine i.e., with a rating 9 had alcohol
+content greater than 12. Similarly, almost all the wines with poor
+rating i.e., 3 had an alcohol content less than 12. Alcohol contnt strengthend almost all the features which had a negative correlation with quality.
+
+### Were there any interesting or surprising interactions between features?
+Since alcohol is the parameter which would push a wine towards a better
+quality rating therefore, we can expect a positive slope linear fit line
+as noted in plot of alcohol vs volatile acidity. It means that higher 
+the amount of less preferred  chemical higher the alcohol needed in 
+order to retain a high rating. However, in the following plots a negative slope is observed implying even though the amount of alcohol
+decreased and the unwanted chemical composition increased, the quality
+rating didn't drop.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+I tried to fit a linear model into the dataset. The outliers tend to 
+sway the best fit line.
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, Plot_One}
+#boxplots of the physicochemical features with ylim = -5 to 5
+
+ggplot(stack(n_wd), aes(x = ind, y = values)) +
+  geom_boxplot()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+      scale_y_continuous(breaks = seq(-2,5,0.5), limits = c(-2,5))+
+      ggtitle("spread of physicochemical features")
+
+```
+
+### Description One
+The spread of different features on a normalized scale compares the 
+spread od data relative to each other. The plot also shows the presence
+of outliers.
+
+### Plot Two
+```{r echo=FALSE, message=FALSE}
+#correlation grid
+theme_set(theme_minimal(20))
+
+#set seed for reproducible results
+set.seed(1610)
+wd_subset<- wd[,c(2:13)]
+names(wd_subset)
+ggpairs(wd_subset[sample.int(nrow(wd_subset),1000),])
+```
+
+### Description Two
+Contains all the relationship among the features in the dataset. It is
+really helpful in directing the focus of the analysis by pinpointing
+the features which have high impact on the feature of interest.
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+#3 positive features affecting quality of wine
+ggplot(aes(x=sulphates, y= alcohol), data=wd)+
+      geom_point(aes(color=pH))+
+      facet_wrap(~quality, ncol=3)+
+      geom_smooth(method = 'lm', color='red')+
+      ggtitle("Effect of sulphates, pH and alcohol \n on quality")
+```
+
+### Description Three
+The above plot shows the impact of 3 features on the feature of
+interest. It is worthwhile to note that all the plots have a downward 
+slope which signifies that decrease in amount of feature is balanced 
+by increasein other feature to retain the quality of wine.
+
+
+------
+
+# Reflection
+From the study it could be concluded that alcohol content is the single
+most important feature affecting the quality of wine. A number of trials
+were conducted to reach a particular plot. Such as the histograms of
+each feature which was changed to a single boxplot of normalized data.
+Faceting of qaulity w.r.t. various features in multivriate analysis.
+
+
+###Appendix
+Histograms of input features 
+```{r echo=FALSE, Extra_Plots}
+#distribution of volatile acidity
+
+ggplot(aes(x=volatile.acidity), data= wd)+
+      geom_histogram()
+
+
+#distribution of citric acid
+
+ggplot(aes(x=citric.acid), data= wd)+
+      geom_histogram()
+
+
+#distribution of residual sugar
+
+ggplot(aes(x=residual.sugar), data= wd)+
+      geom_histogram()
+
+
+#distribution of chlorides
+
+ggplot(aes(x=chlorides), data= wd)+
+      geom_histogram()
+
+#distribution of free sulphur dioxide
+
+ggplot(aes(x=free.sulfur.dioxide), data= wd)+
+      geom_histogram()
+
+
+#distribution of total sulphur dioxide
+
+ggplot(aes(x=total.sulfur.dioxide), data= wd)+
+      geom_histogram()
+
+#distribution of density
+
+ggplot(aes(x=density), data= wd)+
+      geom_histogram()
+
+#distribution of pH
+ggplot(aes(x=pH), data= wd)+
+      geom_histogram()
+
+#distribution of sulphates
+
+ggplot(aes(x=sulphates), data= wd)+
+      geom_histogram()     
+
+
+#distribution of alcohol percentage
+
+ggplot(aes(x=alcohol), data= wd)+ 
+      geom_histogram()
+
+
+#these plots were not helpful in finding affect of 2 or more features on
+#quality
+ggplot(aes(x=citric.acid, y= alcohol), data=wd)+
+      geom_point(aes(color=quality))
+
+ggplot(aes(x=residual.sugar, y= alcohol), data=wd)+
+      geom_point(aes(color=quality))
+
+ggplot(aes(x=volatile.acidity, y= alcohol), data=wd)+
+      geom_point(aes(color=quality))
+
+ggplot(aes(x=sulphates, y= alcohol), data=wd)+
+      geom_point(aes(color=quality))
+
+
+```
+
+library(dplyr)
+library(BBmisc)
+library(GGally)
